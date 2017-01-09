@@ -17,25 +17,26 @@ var rpsGame = {
 	player1: null,
 
 	player2: null,
+
+	handSelected: false,
   	
   	selectPlayer: function (){
   
   		console.log("selectPlayer function called");
 
    			//check the database to see if player 1 or 2 has been selected and set the local and server variables to the player names chosen
-			if(this.localPlayer === null) {
+			if(rpsGame.localPlayer === null) {
 				
 				var userRef = firebase.database().ref("users");
 
 				userRef.once("value")
 					.then(function(snapshot){
-					console.log("P1? "+ snapshot.child("player1").exists());	
+					//console.log("P1? "+ snapshot.child("player1").exists());	
 				  	if (snapshot.child("player1").exists()) {
 				 		
-				 		rpsGame.player1 = snapshot.child("player1").val();
 				 		rpsGame.player2 = $("#player-name").val().trim();
 				 		rpsGame.localPlayer = rpsGame.player2;
-				 		
+				 	
 				 		database.ref("users").update({
 				 			"player2": rpsGame.player2
 				 		});
@@ -60,31 +61,56 @@ var rpsGame = {
 
   	},
 
-  	selectHand: function (){
+  	selectHand: function (button){
   		//console.log("test");
+  		if(rpsGame.handSelected === false && rpsGame.localPlayer !== null){
+  			$(button).addClass("active");
+  			var hand = $(button).data("hand");
+  			var handName = $(button).data("name");
+  			console.log(hand);
+  			rpsGame.handSelected = true;
+
+  			database.ref("users").once("value").then(function(snapshot){
+  				if(snapshot.child("player1").val() === rpsGame.localPlayer) {
+  					database.ref().update({
+  						"p1hand" : hand,
+  						"p1handName" : handName
+  					});
+  				} else {
+  					database.ref().update({
+  						"p2hand" : hand,
+  						"p2handName" : handName
+  					})
+  				}
+  			});
+
+
+
+  		} else {
+  			alert("You have chosen already");
+  		}
+
   	},
 
   	compareHand: function (){
-  		//console.log("test");
+  		console.log("compareHand");
   	},
 
-  	writeNames: function (){
+  	writeNames: function (snapshot){
 
   		console.log("writeNames function called");
 
-  		var userRef = new firebase.database().ref("users");
-
-  		userRef.once("value").then(function(snapshot){
   			
   			//check if player 1 or 2 exists and write names to player-container
   			if(snapshot.child("player1").exists() && snapshot.child("player2").exists()){
   				var p1 = $("<p>");
   				p1.html("Player 1: " + snapshot.child("player1").val());
   				var p2 = $("<p>");
-  				p2.html("player 2: " + snapshot.child("player2").val());
+  				p2.html("Player 2: " + snapshot.child("player2").val());
 
   				$("#player-container").empty();
-  				$("#player-container").append(p1, p2);  									
+  				$("#player-container").append(p1, p2);  
+
 
   			} else if (snapshot.child("player1").exists()) {
   				var p1 = $("<p>");
@@ -92,30 +118,43 @@ var rpsGame = {
 
   				$("#player-container").empty();
   				$("#player-container").append(p1);
+
   			} else if (snapshot.child("player2").exists()) {
   				var p2 = $("<p>");
   				p2.html("Player 2: " + snapshot.child("player2").val());
 
   				$("#player-container").empty();
   				$("#player-container").append(p2);
+
   			};
-  			//check if local player has been selected and write to player-container. clear name-container if local player exists
-  			if(rpsGame.localPlayer !== null){
-  				$("#name-container").empty();
-  				if (rpsGame.localPlayer === snapshot.child("player1").val()){
-  					var p = $("<p>");
-  					p.html("You are Player 1");
+  			
+  			
+  			rpsGame.writePlayer(snapshot);
+  		
+  	},
 
-  					$("player-container").prepend(p);
-  				} else if (rpsGame.localPlayer === snapshot.child("player2").val()){
-  					var p = $("<p>");
-  					p.html("You are Player 2");
+  	writePlayer: function (snapshot){
+  		//check if local player has been selected and write to player-container. clear name-container if local player exists
+  		
+  		if(rpsGame.localPlayer === null && snapshot.child("player1").exists() && snapshot.child("player2").exists()){
+  			alert("Game already in session");
+  		}
 
-  					$("#player-container").prepend(p);
-  				}
+  		if(rpsGame.localPlayer !== null){
+  			//console.log(this);
+  			$("#name-container").empty();
+  			if (rpsGame.localPlayer === rpsGame.player1){
+  				var p = $("<p>");
+  				p.html("You are Player 1");
+
+  				$("#player-container").prepend(p);
+  			} else if (rpsGame.localPlayer === rpsGame.player2){
+  				var p = $("<p>");
+  				p.html("You are Player 2");
+
+  				$("#player-container").prepend(p);
   			};
-
-  		});
+  		};
   	},
 
   	writeResults: function (){
@@ -132,9 +171,13 @@ var rpsGame = {
 		});
   	},
 
+
   	start: function (){
   		rpsGame.createUserGroup();
-  		rpsGame.writeNames();
+  		
+  		database.ref("users").once("value").then(function(snapshot){
+  			rpsGame.writeNames(snapshot);
+  		});	
   	},
 
   	leaveGame: function (){
@@ -145,7 +188,9 @@ var rpsGame = {
 
 rpsGame.start();
 
-
+database.ref("users").on("value", function(snapshot){
+	rpsGame.writeNames(snapshot);
+});
 
  $("#submit-name").click(function(event){
 
@@ -153,13 +198,13 @@ rpsGame.start();
  	event.preventDefault();
 
  	rpsGame.selectPlayer();
- 	rpsGame.writeNames();
+
 
 
  });
 
  $(".hand").click(function(){
-
+ 	rpsGame.selectHand(this);
  });
 
 /*
