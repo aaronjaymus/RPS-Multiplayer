@@ -12,11 +12,14 @@
 		<h1>Rock Paper Scissors</h1>
 	</header>
 	<section id="game-container container">
-		<form role="form-group">
-			<label for="player-name">Player name: </label>
-			<input class="form-control" type="text" id="player-name">
-			<button class="btn btn-default" id="submit-name">Submit</button>
-		</form>
+		<div id="name-container">
+			<form role="form-group">
+				<label for="player-name">Player name: </label>
+				<input class="form-control" type="text" id="player-name">
+				<button class="btn btn-default" id="submit-name">Submit</button>
+			</form>
+		</div>
+		<div id="player-container"></div>
 		<h2>Pick your move</h2>
 		<button type="button" class="btn btn-default hand" id="rock" data-hand="r">Rock</button>
 		<button type="button" class="btn btn-default hand" id="paper" data-hand="p">Paper</button>
