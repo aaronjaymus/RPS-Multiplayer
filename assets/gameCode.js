@@ -73,27 +73,93 @@ var rpsGame = {
   			database.ref("users").once("value").then(function(snapshot){
   				if(snapshot.child("player1").val() === rpsGame.localPlayer) {
   					database.ref().update({
-  						"p1hand" : hand,
-  						"p1handName" : handName
+  						"hands/p1hand" : hand,
+  						"hands/p1handName" : handName
   					});
   				} else {
   					database.ref().update({
-  						"p2hand" : hand,
-  						"p2handName" : handName
+  						"hands/p2hand" : hand,
+  						"hands/p2handName" : handName
   					})
   				}
   			});
-
-
 
   		} else {
   			alert("You have chosen already");
   		}
 
+  		rpsGame.compareHand();
+
   	},
 
   	compareHand: function (){
   		console.log("compareHand");
+  		database.ref("hands").once("value").then(function(snapshot){
+  			if(snapshot.child("p1hand").exists() && snapshot.child("p2hand").exists()){
+  				var hand1 = snapshot.child("p1hand").val();
+  				var hand2 = snapshot.child("p2hand").val();
+
+  				rpsGame.rpsCode(hand1, hand2);
+
+  			}
+  		});
+
+  	},
+
+  	rpsCode: function (h1, h2){
+
+		database.ref("hands").once("value").then(function(snapshot){
+
+			//var ties = snapshot.child("results/ties").val();
+			//var p1wins = snapshot.child("results/p1wins").val();
+			//var p2wins = snapshot.child("results/p2wins").val();
+
+			if(h1 === h2){
+				console.log("tie");
+				database.ref("results/ties").transaction(function(score){
+					return score + 1;
+				});
+			} else if (h1 === "r"){
+				if(h2 === "p"){
+					console.log("P2 Win");
+					database.ref("results/p2wins").transaction(function(score){
+						return score + 1;
+					});
+				} else {
+					console.log("P1 Win");
+					database.ref("results/p1wins").transaction(function(score){
+						return score + 1;
+					});
+				}
+			} else if (h1 === "p"){
+				if(h2 === "r"){
+					console.log("P1 Win");
+					database.ref("results/p1wins").transaction(function(score){
+						return score + 1;
+					});
+				} else {
+					console.log("P2 Win");
+					database.ref("results/p2wins").transaction(function(score){
+						return score + 1;
+					});
+				}
+			} else if (h1 === "s") {
+				if(h2 === "r"){
+					console.log("P2 Win");
+					database.ref("results/p2wins").transaction(function(score){
+						return score + 1;
+					});
+				} else {
+					console.log("P1 Win");
+					database.ref("results/p1wins").transaction(function(score){
+						return score + 1;
+					});
+				}
+			}
+		
+		});
+
+
   	},
 
   	writeNames: function (snapshot){
@@ -157,7 +223,10 @@ var rpsGame = {
   		};
   	},
 
-  	writeResults: function (){
+  	writeResults: function (snapshot){
+  		$("#player-1-wins").html(snapshot.child("p1wins").val());
+  		$("#player-2-wins").html(snapshot.child("p2wins").val());
+  		$("#tie-games").html(snapshot.child("ties").val());
   		//console.log("test");
   	},
 
@@ -171,13 +240,29 @@ var rpsGame = {
 		});
   	},
 
+  	resetGame: function (){
+  		database.ref("users").once("value").then(function(snapshot){
+	  		if(snapshot.child("player1").exists() && snapshot.child("player2").exists()){
+	  			alert("Game already in session");
+	  		} else {
+		  		database.ref().update({
+		  			"results/ties" : 0,
+		  			"results/p1wins" : 0,
+		  			"results/p2wins" : 0
+		  		});
+	  		}
+  		});
+  	},
+
+  	resetHand: function (){
+  		$(".hand").removeClass("active");
+  		database.ref("hands").set(null);
+  		rpsGame.handSelected = false;
+  	},
 
   	start: function (){
-  		rpsGame.createUserGroup();
-  		
-  		database.ref("users").once("value").then(function(snapshot){
-  			rpsGame.writeNames(snapshot);
-  		});	
+  		rpsGame.createUserGroup();	
+  		rpsGame.resetGame();
   	},
 
   	leaveGame: function (){
@@ -190,6 +275,11 @@ rpsGame.start();
 
 database.ref("users").on("value", function(snapshot){
 	rpsGame.writeNames(snapshot);
+});
+
+database.ref("results").on("value", function(snapshot){
+	rpsGame.writeResults(snapshot);
+	rpsGame.resetHand();
 });
 
  $("#submit-name").click(function(event){
