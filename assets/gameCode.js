@@ -35,29 +35,30 @@ var rpsGame = {
 				  	if (snapshot.child("player1").exists()) {
 				 		
 				 		rpsGame.player2 = $("#player-name").val().trim();
-				 		rpsGame.localPlayer = rpsGame.player2;
+				 		rpsGame.localPlayer = $("#player-name").val().trim();
 				 	
 				 		database.ref("users").update({
 				 			"player2": rpsGame.player2
 				 		});
 
 				 	console.log("Player2: "+ rpsGame.player2);
-				 	
+				 	console.log("call 1 Local player is: " + rpsGame.localPlayer)
 				 	} else {
 				 		
 				 		rpsGame.player1 = $("#player-name").val().trim();
-				 		rpsGame.localPlayer = rpsGame.player1;
+				 		rpsGame.localPlayer = $("#player-name").val().trim();
 				 		
 				 		database.ref("users").update({
 				 			"player1": rpsGame.player1
 				 		});
 				 		
 				 	console.log("Player1: " + rpsGame.player1);
+				 	console.log("call 1 Local player is: " + rpsGame.localPlayer)
 				 	};
 				});
 			};
 
-		
+					
 
   	},
 
@@ -230,16 +231,6 @@ var rpsGame = {
   		//console.log("test");
   	},
 
-  	createUserGroup: function (){
-  		database.ref().once("value").then(function(snapshot){
-  			if(!snapshot.child("users").exists()){
-  				database.ref().set({
-  					"users": 0
-  				});
-  			};
-		});
-  	},
-
   	resetGame: function (){
   		database.ref("users").once("value").then(function(snapshot){
 	  		if(snapshot.child("player1").exists() && snapshot.child("player2").exists()){
@@ -260,13 +251,41 @@ var rpsGame = {
   		rpsGame.handSelected = false;
   	},
 
-  	start: function (){
-  		rpsGame.createUserGroup();	
+  	sendChat: function (){
+
+  		console.log("call 2 local player" + rpsGame.localPlayer);
+  		var chat = $("#chat-input").val();
+  		$("#chat-input").val("");
+
+  		database.ref().once("value").then(function(snapshot){
+  			if(rpsGame.localPlayer === snapshot.child("users/player1").val()){
+  				database.ref().update({"chat" : snapshot.child("users/player1").val() + ": " + chat});
+  			} else if(rpsGame.localPlayer === snapshot.child("users/player2").val()){
+  				database.ref().update({"chat" : snapshot.child("users/player2").val() + ": " + chat});
+  			} else {
+  				alert("Choose your name before talking smack");
+  			}
+  		});
+  	},
+
+  	writeChat: function (){
+  		var chatP = $("<p>");
+  		database.ref().once("value").then(function(snapshot){
+  			chatP.text(snapshot.child("chat").val());
+  			$("#chat-section").append(chatP);
+  		});
+  	},
+
+  	resetChat: function (){
+  		$("#chat-section").empty();
+  	},
+
+  	start: function (){	
   		rpsGame.resetGame();
   	},
 
   	leaveGame: function (){
-
+ 		rpsGame.resetGame();
   	}
 
  };
@@ -282,6 +301,10 @@ database.ref("results").on("value", function(snapshot){
 	rpsGame.resetHand();
 });
 
+database.ref("chat").on("value", function(snapshot){
+	rpsGame.writeChat();
+});
+
  $("#submit-name").click(function(event){
 
 
@@ -289,17 +312,23 @@ database.ref("results").on("value", function(snapshot){
 
  	rpsGame.selectPlayer();
 
-
-
  });
 
  $(".hand").click(function(){
  	rpsGame.selectHand(this);
  });
 
-/*
- $(window).unload(function(){
 
- });
-*/
+$("#send-chat").click(function(event){
+
+	event.preventDefault();
+
+	rpsGame.sendChat();
+});
+
+$(window).on("beforeunload", function () {
+	rpsGame.leaveGame();
+});
+
+
 
