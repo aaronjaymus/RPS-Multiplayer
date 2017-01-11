@@ -298,6 +298,7 @@ var rpsGame = {
 
   	start: function (){	
   		rpsGame.resetGame();
+  		rpsGame.resetChat();
   	}
 
 
