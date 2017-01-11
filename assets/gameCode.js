@@ -251,7 +251,8 @@ var rpsGame = {
 		  		database.ref().update({
 		  			"results/ties" : 0,
 		  			"results/p1wins" : 0,
-		  			"results/p2wins" : 0
+		  			"results/p2wins" : 0,
+		  			"chat" : null
 		  		});
 	  		}
   		});
