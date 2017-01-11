@@ -95,6 +95,8 @@ var rpsGame = {
   			alert("You have chosen already");
   		}
 
+  		$("#hand-tracker").html("Waiting for other player to select")
+
   		rpsGame.compareHand();
 
   	},
@@ -117,28 +119,30 @@ var rpsGame = {
 
 		database.ref().once("value").then(function(snapshot){
 
-			this.player1 = snapshot.child("users/player1").val();
-			this.player2 = snapshot.child("users/player2").val();
+			var p1 = snapshot.child("users/player1").val();
+			var p2 = snapshot.child("users/player2").val();
 
 			if(h1 === h2){
 				console.log("tie");
 				database.ref("results/ties").transaction(function(score){
 					return score + 1;
 				});
-				
+				database.ref("winner").set("Tie game");
+
 			} else if (h1 === "r"){
 				if(h2 === "p"){
 					console.log("P2 Win");
 					database.ref("results/p2wins").transaction(function(score){
 						return score + 1;
 					});
-					
+					database.ref("winner").set(p2 + " Wins!");
+
 				} else {
 					console.log("P1 Win");
 					database.ref("results/p1wins").transaction(function(score){
 						return score + 1;
 					});
-					
+					database.ref("winner").set(p1 + " Wins!");
 				}
 			} else if (h1 === "p"){
 				if(h2 === "r"){
@@ -146,13 +150,13 @@ var rpsGame = {
 					database.ref("results/p1wins").transaction(function(score){
 						return score + 1;
 					});
-					
+					database.ref("winner").set(p2 + " Wins!");
 				} else {
 					console.log("P2 Win");
 					database.ref("results/p2wins").transaction(function(score){
 						return score + 1;
 					});
-					
+					database.ref("winner").set(p1 + " Wins!");
 				}
 			} else if (h1 === "s") {
 				if(h2 === "r"){
@@ -160,13 +164,13 @@ var rpsGame = {
 					database.ref("results/p2wins").transaction(function(score){
 						return score + 1;
 					});
-					
+					database.ref("winner").set(p2 + " Wins!");
 				} else {
 					console.log("P1 Win");
 					database.ref("results/p1wins").transaction(function(score){
 						return score + 1;
 					});
-
+					database.ref("winner").set(p1 + " Wins!");
 				}
 			}
 		
@@ -252,7 +256,8 @@ var rpsGame = {
 		  			"results/ties" : 0,
 		  			"results/p1wins" : 0,
 		  			"results/p2wins" : 0,
-		  			"chat" : null
+		  			"chat" : null,
+		  			"winner" : null
 		  		});
 	  		}
   		});
@@ -320,6 +325,13 @@ database.ref("chat").on("value", function(snapshot){
 	rpsGame.writeChat();
 });
 
+database.ref("winner").on("value", function(snapshot){
+	var handWinner = snapshot.val();
+	$("#hand-tracker").html(handWinner);
+	console.log(handWinner);
+	var timeout = setTimeout(function() {rpsGame.clearHandTracker();}, 3000);
+});
+
  $("#submit-name").click(function(event){
 
 
@@ -342,9 +354,7 @@ $("#send-chat").click(function(event){
 });
 
 
-$(window).on("beforeunload", function () {
-	//rpsGame.leaveGame();
-});
+
 
 
 
