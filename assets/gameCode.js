@@ -41,6 +41,9 @@ var rpsGame = {
 				 			"player2": rpsGame.player2
 				 		});
 
+				 		var disconnect2 = firebase.database().ref("users/player2");
+				 		disconnect2.onDisconnect().set(null);
+
 				 	console.log("Player2: "+ rpsGame.player2);
 				 	console.log("call 1 Local player is: " + rpsGame.localPlayer)
 				 	} else {
@@ -51,6 +54,9 @@ var rpsGame = {
 				 		database.ref("users").update({
 				 			"player1": rpsGame.player1
 				 		});
+
+				 		var disconnect1 = firebase.database().ref("users/player1");
+				 		disconnect1.onDisconnect().set(null);
 				 		
 				 	console.log("Player1: " + rpsGame.player1);
 				 	console.log("call 1 Local player is: " + rpsGame.localPlayer)
@@ -109,28 +115,30 @@ var rpsGame = {
 
   	rpsCode: function (h1, h2){
 
-		database.ref("hands").once("value").then(function(snapshot){
+		database.ref().once("value").then(function(snapshot){
 
-			//var ties = snapshot.child("results/ties").val();
-			//var p1wins = snapshot.child("results/p1wins").val();
-			//var p2wins = snapshot.child("results/p2wins").val();
+			this.player1 = snapshot.child("users/player1").val();
+			this.player2 = snapshot.child("users/player2").val();
 
 			if(h1 === h2){
 				console.log("tie");
 				database.ref("results/ties").transaction(function(score){
 					return score + 1;
 				});
+				
 			} else if (h1 === "r"){
 				if(h2 === "p"){
 					console.log("P2 Win");
 					database.ref("results/p2wins").transaction(function(score){
 						return score + 1;
 					});
+					
 				} else {
 					console.log("P1 Win");
 					database.ref("results/p1wins").transaction(function(score){
 						return score + 1;
 					});
+					
 				}
 			} else if (h1 === "p"){
 				if(h2 === "r"){
@@ -138,11 +146,13 @@ var rpsGame = {
 					database.ref("results/p1wins").transaction(function(score){
 						return score + 1;
 					});
+					
 				} else {
 					console.log("P2 Win");
 					database.ref("results/p2wins").transaction(function(score){
 						return score + 1;
 					});
+					
 				}
 			} else if (h1 === "s") {
 				if(h2 === "r"){
@@ -150,11 +160,13 @@ var rpsGame = {
 					database.ref("results/p2wins").transaction(function(score){
 						return score + 1;
 					});
+					
 				} else {
 					console.log("P1 Win");
 					database.ref("results/p1wins").transaction(function(score){
 						return score + 1;
 					});
+
 				}
 			}
 		
@@ -251,6 +263,10 @@ var rpsGame = {
   		rpsGame.handSelected = false;
   	},
 
+  	clearHandTracker: function (){
+  		$("#hand-tracker").empty();
+  	},
+
   	sendChat: function (){
 
   		console.log("call 2 local player" + rpsGame.localPlayer);
@@ -282,11 +298,8 @@ var rpsGame = {
 
   	start: function (){	
   		rpsGame.resetGame();
-  	},
-
-  	leaveGame: function (){
- 		rpsGame.resetGame();
   	}
+
 
  };
 
@@ -326,8 +339,9 @@ $("#send-chat").click(function(event){
 	rpsGame.sendChat();
 });
 
+
 $(window).on("beforeunload", function () {
-	rpsGame.leaveGame();
+	//rpsGame.leaveGame();
 });
 
 
