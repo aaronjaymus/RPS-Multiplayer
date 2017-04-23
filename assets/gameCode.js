@@ -71,7 +71,7 @@ var rpsGame = {
   	selectHand: function (button){
   		//console.log("test");
   		if(rpsGame.handSelected === false && rpsGame.localPlayer !== null){
-  			$(button).addClass("active");
+  			$(button).addClass("btn-primary");
   			var hand = $(button).data("hand");
   			var handName = $(button).data("name");
   			console.log(hand);
@@ -264,7 +264,7 @@ var rpsGame = {
   	},
 
   	resetHand: function (){
-  		$(".hand").removeClass("active");
+  		$(".hand").removeClass("btn-primary");
   		database.ref("hands").set(null);
   		rpsGame.handSelected = false;
   	},
